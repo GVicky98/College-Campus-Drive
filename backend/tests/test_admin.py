@@ -136,3 +136,12 @@ def test_settings(client, admin, student):
     pub = client.get(f"{API}/settings/public", headers=student).json()["data"]
     assert pub["maintenanceBanner"] is True and "placementEmail" not in pub
     assert client.put(f"{API}/admin/settings", headers=admin, json={**body, "sessionTimeoutMinutes": 1}).status_code == 422
+
+
+def test_seed_reference_is_idempotent(db):
+    from app.models import Course, Permission
+    from app.seed import seed_reference
+    before = (len(db.scalars(select(Course)).all()), len(db.scalars(select(Permission)).all()))
+    seed_reference(db)  # the fixture already ran it once
+    seed_reference(db)
+    assert (len(db.scalars(select(Course)).all()), len(db.scalars(select(Permission)).all())) == before

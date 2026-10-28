@@ -82,7 +82,7 @@ def seed_reference(db: Session) -> None:
             db.add(depts[code])
     db.flush()
 
-    courses = {c.code for c in db.scalars(select(Course.code))}
+    courses = set(db.scalars(select(Course.code)))
     for code, dept in depts.items():
         ccode = f"{code.replace('&', '')}-UG"
         if ccode not in courses:
