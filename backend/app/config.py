@@ -1,12 +1,17 @@
 """Application settings, read from environment variables (and backend/.env)."""
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# backend/ — .env and the uploads folder are found from here, whatever folder a command is run from.
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+ENV_FILE = BACKEND_DIR / ".env"
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(env_file=ENV_FILE, env_file_encoding="utf-8-sig", extra="ignore")
 
     app_env: str = "development"  # development | testing | production
     database_url: str = ""
@@ -58,6 +63,11 @@ class Settings(BaseSettings):
         return self.app_env == "production"
 
     @property
+    def upload_path(self) -> Path:
+        path = Path(self.upload_dir)
+        return path if path.is_absolute() else BACKEND_DIR / path
+
+    @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
@@ -67,7 +77,9 @@ class Settings(BaseSettings):
             return self
         missing = [k for k in ("database_url", "secret_key", "jwt_secret_key") if not getattr(self, k)]
         if missing:
-            raise ValueError(f"Missing required settings: {', '.join(m.upper() for m in missing)} (see backend/.env.example)")
+            where = (f"Fill them in {ENV_FILE}" if ENV_FILE.exists() else
+                     f"{ENV_FILE} was not found: copy backend/.env.example to backend/.env and fill it in")
+            raise ValueError(f"Missing required settings: {', '.join(m.upper() for m in missing)}. {where}.")
         if self.is_production:
             if len(self.secret_key) < 32 or len(self.jwt_secret_key) < 32:
                 raise ValueError("SECRET_KEY and JWT_SECRET_KEY must be at least 32 characters in production")

@@ -32,7 +32,7 @@ ALLOWED = {".pdf": "application/pdf", ".docx": "application/vnd.openxmlformats-o
 
 # ---------------------------------------------------------------- storage + extraction
 def upload_root() -> Path:
-    root = Path(get_settings().upload_dir)
+    root = get_settings().upload_path
     root.mkdir(parents=True, exist_ok=True)
     return root
 

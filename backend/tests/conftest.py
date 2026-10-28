@@ -2,6 +2,9 @@
 import os
 
 os.environ["APP_ENV"] = "testing"
+# Never use a real LLM key from backend/.env in tests (the assistant tests use a scripted fake model).
+os.environ["LLM_API_KEY"] = ""
+os.environ["LLM_PROVIDER"] = "anthropic"
 os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-that-is-long-enough-123456")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-123456")
 
